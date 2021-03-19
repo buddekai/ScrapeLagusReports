@@ -2,7 +2,7 @@
 # Author: Kai Budde
 # Created: 2021/03/19
 # Last changed: 2021/03/19
-# Version: 0.1.0
+# Version: 0.1.1
 
 # Start --------------------------------------------------------------------
 
@@ -39,8 +39,6 @@ deu <- tesseract("deu")
 
 # Read pdfs and extract information ----------------------------------------
 
-
-
 directory_of_R_script <- rstudioapi::getSourceEditorContext()$path
 directory_of_R_script <- gsub(pattern = "ScrapeLagusReports.R$",
                               replacement = "",
@@ -55,7 +53,11 @@ pdf_files <- list.files(path = paste(input_dir, "/", sep = ""))
 pdf_files <- pdf_files[grepl(pattern = "\\.pdf", x = pdf_files)]
 number_of_pdfs <- length(pdf_files)
 
-districts <-   c("LUP", "MSE", "NWM", "LRO", "VG", "VR", "HRO", "SN", "MV")
+districts_old <-   c("LK Ludwigslust-Parchim", "LK Mecklenb. Seenplatte",
+                     "LK Nordwestmecklenburg", "LK Rostock",
+                     "LK Vorpommern-Greifswald", "LK Vorpommern-Rügen",
+                     "Rostock (Stadt)", "Schwerin (Stadt)")
+districts_new <-   c("LUP", "MSE", "NWM", "LRO", "VG", "VR", "HRO", "SN", "MV")
 
 # Initialize data frame
 df_results <- data.frame(
@@ -91,43 +93,108 @@ for(i in 1:number_of_pdfs){
   full_png_height <- as.numeric(magick::image_info(full_png)["height"])
   full_png_width <- as.numeric(magick::image_info(full_png)["width"])
   
-  width_cum <- as.integer(full_png_width/20)
-  height_cum <- as.integer(full_png_height/5)
-  start_pos_width_cum <- as.integer(0.68*full_png_width)
-  start_pos_height_cum <- as.integer(0.35*full_png_height)
   
+  if(as.Date(datum)<as.Date("2020-04-06")){
+    # First format
+    
+    # Define start and end position of image for ocr
+    width_cum <- as.integer(0.04*full_png_width)
+    height_cum <- as.integer(0.13*full_png_height)
+    start_pos_width_cum <- as.integer(0.59*full_png_width)
+    start_pos_height_cum <- as.integer(0.25*full_png_height)
+    
+    width_district <- as.integer(0.17*full_png_width)
+    height_district <- as.integer(0.17*full_png_height)
+    start_pos_width_district <- as.integer(0.43*full_png_width)
+    start_pos_height_district <- as.integer(0.22*full_png_height)
+    
+    width_mv <- as.integer(0.2*full_png_width)
+    height_mv <- as.integer(0.083*full_png_height)
+    start_pos_width_mv <- as.integer(0.1*full_png_width)
+    start_pos_height_mv <- as.integer(0.1*full_png_height)
+    
+  }else if(as.Date(datum)<as.Date("2020-04-30")){
+    # Second format
+    
+    # Define start and end position of image for ocr
+    width_cum <- as.integer(0.04*full_png_width)
+    height_cum <- as.integer(0.14*full_png_height)
+    start_pos_width_cum <- as.integer(0.59*full_png_width)
+    start_pos_height_cum <- as.integer(0.31*full_png_height)
+    
+    width_district <- as.integer(0.17*full_png_width)
+    height_district <- as.integer(0.14*full_png_height)
+    start_pos_width_district <- as.integer(0.43*full_png_width)
+    start_pos_height_district <- as.integer(0.31*full_png_height)
+    
+    width_mv <- as.integer(0.2*full_png_width)
+    height_mv <- as.integer(0.05*full_png_height)
+    start_pos_width_mv <- as.integer(0.2*full_png_width)
+    start_pos_height_mv <- as.integer(0.1*full_png_height)
+    
+  }else if(as.Date(datum)<as.Date("2020-12-15")){
+    # Third format
+    
+    # Define start and end position of image for ocr
+    width_cum <- as.integer(0.05*full_png_width)
+    height_cum <- as.integer(0.2*full_png_height)
+    start_pos_width_cum <- as.integer(0.68*full_png_width)
+    start_pos_height_cum <- as.integer(0.36*full_png_height)
+    
+    width_district <- as.integer(full_png_width/15)
+    height_district <- as.integer(full_png_height/5)
+    start_pos_width_district <- as.integer(0.48*full_png_width)
+    start_pos_height_district <- as.integer(0.35*full_png_height)
+    
+    width_mv <- as.integer(0.5*full_png_width)
+    height_mv <- as.integer(0.0167*full_png_height)
+    start_pos_width_mv <- as.integer(0.5*full_png_width)
+    start_pos_height_mv <- as.integer(0.51*full_png_height)
+    
+  }else{
+    # Current format
+    
+    # Define start and end position of image for ocr
+    width_cum <- as.integer(0.05*full_png_width)
+    height_cum <- as.integer(0.2*full_png_height)
+    start_pos_width_cum <- as.integer(0.68*full_png_width)
+    start_pos_height_cum <- as.integer(0.35*full_png_height)
+    
+    width_district <- as.integer(full_png_width/15)
+    height_district <- as.integer(full_png_height/5)
+    start_pos_width_district <- as.integer(0.48*full_png_width)
+    start_pos_height_district <- as.integer(0.35*full_png_height)
+    
+    width_mv <- as.integer(full_png_width/2)
+    height_mv <- as.integer(full_png_height/60)
+    start_pos_width_mv <- as.integer(0.5*full_png_width)
+    start_pos_height_mv <- as.integer(0.51*full_png_height)
+    
+  }
+  
+  # Crop image and save information of cumulative cases
   cumulative_cases_png <- image_crop(image = full_png,
-                             geometry = paste(
-                               width_cum,"x",
-                               height_cum, "+",
-                               start_pos_width_cum,
-                               "+",
-                               start_pos_height_cum,
-                               sep=""))
+                                     geometry = paste(
+                                       width_cum,"x",
+                                       height_cum, "+",
+                                       start_pos_width_cum,
+                                       "+",
+                                       start_pos_height_cum,
+                                       sep=""))
   #print(cumulative_cases_png)
   
   # Crop image and save information of city/district
-  width_district <- as.integer(full_png_width/15)
-  height_district <- as.integer(full_png_height/5)
-  start_pos_width_district <- as.integer(0.48*full_png_width)
-  start_pos_height_district <- as.integer(0.35*full_png_height)
-  
   district_names_png <- image_crop(image = full_png,
-                                     geometry = paste(
-                                       width_district,"x",
-                                       height_district, "+",
-                                       start_pos_width_district,
-                                       "+",
-                                       start_pos_height_district,
-                                       sep=""))
+                                   geometry = paste(
+                                     width_district,"x",
+                                     height_district, "+",
+                                     start_pos_width_district,
+                                     "+",
+                                     start_pos_height_district,
+                                     sep=""))
   #print(district_names_png)
   
   # Crop image and only save information of MV total
-  width_mv <- as.integer(full_png_width/2)
-  height_mv <- as.integer(full_png_height/60)
-  start_pos_width_mv <- as.integer(0.5*full_png_width)
-  start_pos_height_mv <- as.integer(0.51*full_png_height)
-  
   mv_total_png <- image_crop(image = full_png,
                              geometry = paste(
                                width_mv,"x",
@@ -149,37 +216,58 @@ for(i in 1:number_of_pdfs){
   
   df_results$Datum[i] <- datum
   
-  numbers_from_png <- tesseract::ocr(image = cumulative_cases_png, engine = deu)
+  numbers <- tesseract(options = list(tessedit_char_whitelist = "0123456789"))
+  numbers_from_png <- tesseract::ocr(image = cumulative_cases_png, engine = numbers)
   numbers_from_png <- unlist(strsplit(x = numbers_from_png, split = "\n"))
   numbers_from_png <- suppressWarnings(as.integer(numbers_from_png))
   numbers_from_png <- numbers_from_png[!is.na(numbers_from_png)]
   
   if(length(numbers_from_png) == 9){
     numbers_from_png <- numbers_from_png[-length(numbers_from_png)]
-  }else if(length(numbers_from_png) == 8){
-    for(j in 1:length(numbers_from_png)){
-      df_results[i,(j+1)] <- numbers_from_png[j]
-    }
-    rm(j)
-    
-    df_results$MV[i] <- sum(df_results[i, 2:9])
-    
-  }else{
-    print("Something went wrong.")
-    return()
   }
+  if(length(numbers_from_png) != 8){
+    print("Something went wrong with the conversion of the case numbers.")
+  }
+  
+  
+  for(j in 1:length(numbers_from_png)){
+    df_results[i,(j+1)] <- numbers_from_png[j]
+  }
+  rm(j)
+  
+  df_results$MV[i] <- sum(df_results[i, 2:9])
   
   
   districts_from_png <- tesseract::ocr(image = district_names_png, engine = deu)
   districts_from_png <- unlist(strsplit(x = districts_from_png, split = "\n"))
-  districts_from_png <- districts_from_png[districts_from_png %in% districts]
-
-  for(j in 1:length(districts_from_png)){
-    if(districts_from_png[j] != districts[j]){
-      print("Something went wrong with the district names.")
-      print(paste(districts_from_png[j], " != ", districts[j], sep=""))
+  if(as.Date(datum)<as.Date("2020-05-01")){
+    # Old format
+    districts_from_png <- districts_from_png[districts_from_png %in% districts_old]
+    
+    for(j in 1:length(districts_from_png)){
+      if(districts_from_png[j] != districts_old[j]){
+        print("Something went wrong with the district names.")
+        print(paste(districts_from_png[j], " != ", districts[j], sep=""))
+      }
     }
-  }  
+    
+    rm(j)
+    
+  }else{
+    # New format
+    
+    # Remove all non upper-case letter
+    districts_from_png <- gsub(pattern = "[^A-Z]", replacement = "", x = districts_from_png)
+    districts_from_png <- districts_from_png[districts_from_png %in% districts_new]
+    
+    for(j in 1:length(districts_from_png)){
+      if(districts_from_png[j] != districts_new[j]){
+        print("Something went wrong with the district names.")
+        print(paste(districts_from_png[j], " != ", districts[j], sep=""))
+      }
+    }  
+    rm(j)
+  }
   
   # Save texts in file
   dir.create(output_text, showWarnings = FALSE)
