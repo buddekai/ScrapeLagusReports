@@ -1,3 +1,8 @@
+# Result files
+reports/*.pdf
+reports/images/
+reports/text/
+
 # History files
 .Rhistory
 .Rapp.history
