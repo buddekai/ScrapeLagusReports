@@ -40,7 +40,7 @@ deu <- tesseract("deu")
 # Read pdfs and extract information ----------------------------------------
 
 directory_of_R_script <- rstudioapi::getSourceEditorContext()$path
-directory_of_R_script <- gsub(pattern = "ScrapeLagusReports.R$",
+directory_of_R_script <- gsub(pattern = "scrapeLagusReports.R$",
                               replacement = "",
                               x = directory_of_R_script)
 old_wd <- getwd()
