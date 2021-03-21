@@ -2,6 +2,7 @@
 reports/*.pdf
 reports/images/
 reports/text/
+RKIdata/
 
 # History files
 .Rhistory
